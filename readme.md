@@ -31,7 +31,7 @@ Enable Developer Mode
 
 Click Load unpacked and select the project folder
 
-Start your FastAPI backend (make sure it runs on http://127.0.0.1:8000).
+Start your FastAPI backend (make sure it runs on http://127.0.0.1:8000). with- uvicorn server:app --reload --host 0.0.0.0 --port 8000
 
 🛠️ Usage
 
@@ -52,7 +52,7 @@ chrome-extension/
 │── popup.js             # Handles user input, tab query, and API call
 │── background.js        # (optional) Extension lifecycle
 api/
-│── main.py              # FastAPI server (handles /ask requests)
+│── server.py              # FastAPI server (handles /ask requests)
 
 🧩 Example Use Cases
 
@@ -70,8 +70,3 @@ Translate visible text into another language.
 
  Execute actions on the page (click, fill forms).
 
- Support structured output (tables, JSON).
-
- Add context filtering (grab only paragraphs, not nav bars/footers).
-
- Multi-page workflows.
