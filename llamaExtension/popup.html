@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>LLaMA3 Query</title>
+  <style>
+    /* Base styling */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      width: 320px;
+      padding: 15px;
+      margin: 0;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    h3 {
+      margin-top: 0;
+      font-size: 18px;
+      text-align: center;
+      color: #1a73e8;
+    }
+
+    /* Textarea styling */
+    textarea {
+      width: 100%;
+      height: 100px;
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+
+    /* Button styling */
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #155ab6;
+    }
+
+    /* Response box styling */
+    #response {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      min-height: 60px;
+      white-space: pre-wrap;
+      font-size: 14px;
+      overflow-y: auto;
+    }
+
+    /* Optional scrollbar styling for response */
+    #response::-webkit-scrollbar {
+      width: 6px;
+    }
+    #response::-webkit-scrollbar-thumb {
+      background-color: #ccc;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <h3>LLaMA3 Query</h3>
+  <textarea id="prompt" placeholder="Type your instructions here..."></textarea>
+  <button id="send">Send</button>
+  <div id="response"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
