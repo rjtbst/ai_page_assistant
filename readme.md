@@ -2,7 +2,7 @@
 # 🤖 AI Browser Automation 
 
 A powerful Chrome extension powered by LLaMA3 AI for intelligent browser automation. Extract data, fill forms, click buttons, and automate web tasks using natural language.
-
+⚠️ Local only – Your personal data (name, email, etc.) stays on your machine. No external servers are used except your local Ollama LLaMA3 instance.
 ## ✨ Features
 
 ### 🔍 Data Extraction
@@ -84,11 +84,6 @@ Server will start at `http://127.0.0.1:8000`
 
 ### 2. Chrome Extension Setup
 
-#### Create Icons
-Create three icon files (or use placeholders):
-- `icon16.png` (16x16 pixels)
-- `icon48.png` (48x48 pixels)
-- `icon128.png` (128x128 pixels)
 
 #### Load Extension in Chrome
 1. Open Chrome and go to `chrome://extensions/`
