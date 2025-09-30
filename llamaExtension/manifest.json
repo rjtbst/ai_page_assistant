@@ -1,16 +1,31 @@
 {
   "manifest_version": 3,
-  "name": "LLaMA3 Query Extension",
-  "version": "1.0",
-  "description": "Send tab content or prompt to local LLaMA3 server",
-  "permissions": ["activeTab", "scripting"],
+  "name": "AI Browser Automation",
+  "version": "2.0.0",
+  "description": "Intelligent browser automation powered by AI - extract data, fill forms, and automate tasks",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
   },
   "background": {
     "service_worker": "background.js"
-  },
-  "host_permissions": [
-    "http://127.0.0.1:8000/*"
-  ]
+  }
 }
