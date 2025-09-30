@@ -1,84 +1,199 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>LLaMA3 Query</title>
-  <style>
-    /* Base styling */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      width: 320px;
-      padding: 15px;
-      margin: 0;
-      background-color: #f9f9f9;
-      color: #333;
-    }
-
-    h3 {
-      margin-top: 0;
-      font-size: 18px;
-      text-align: center;
-      color: #1a73e8;
-    }
-
-    /* Textarea styling */
-    textarea {
-      width: 100%;
-      height: 100px;
-      padding: 10px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      resize: vertical;
-      box-sizing: border-box;
-    }
-
-    /* Button styling */
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      background-color: #1a73e8;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    button:hover {
-      background-color: #155ab6;
-    }
-
-    /* Response box styling */
-    #response {
-      margin-top: 15px;
-      padding: 10px;
-      background-color: #fff;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      min-height: 60px;
-      white-space: pre-wrap;
-      font-size: 14px;
-      overflow-y: auto;
-    }
-
-    /* Optional scrollbar styling for response */
-    #response::-webkit-scrollbar {
-      width: 6px;
-    }
-    #response::-webkit-scrollbar-thumb {
-      background-color: #ccc;
-      border-radius: 3px;
-    }
-  </style>
+    <title>AI Browser Automation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            width: 380px;
+            padding: 16px;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        h3 {
+            margin: 0 0 16px 0;
+            font-size: 20px;
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            font-size: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .tab {
+            padding: 8px 16px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #666;
+            font-size: 13px;
+            font-weight: 500;
+            transition: color 0.2s;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+            margin-top: 12px;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            min-height: 100px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .tab-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .tab-content::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 3px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .response-item {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .link-item {
+            display: block;
+            color: #667eea;
+            text-decoration: none;
+            padding: 4px 0;
+            word-break: break-all;
+        }
+        
+        .link-item:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-  <h3>LLaMA3 Query</h3>
-  <textarea id="prompt" placeholder="Type your instructions here..."></textarea>
-  <button id="send">Send</button>
-  <div id="response"></div>
-
-  <script src="popup.js"></script>
+    <div class="container">
+        <h3>  AI Browser Automation</h3>
+        <textarea id="prompt" placeholder="Examples:
+• Get all links from this page
+• Find all images and their alt text
+• Fill the login form with email: test@example.com
+• Click the submit button
+• Extract all headings
+• Get text from .main-content selector"></textarea>
+        <button id="send">Execute</button>
+        
+        <div class="tabs">
+            <button class="tab active" data-tab="result">Result</button>
+            <button class="tab" data-tab="debug">Debug</button>
+            <button class="tab" data-tab="raw">Raw JSON</button>
+        </div>
+        
+        <div id="result" class="tab-content active"></div>
+        <div id="debug" class="tab-content"></div>
+        <div id="raw" class="tab-content"></div>
+    </div>
+    
+    <script src="popup.js"></script>
 </body>
 </html>
