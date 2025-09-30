@@ -5,7 +5,7 @@ This Chrome extension lets you interact with any webpage using natural language.
 
 
 ✨ Features
-Open-ended user queries (any question about page content).
+Open-ended user queries (any question about page content in any format).
 
 Dynamic browser automation (fill_form, click, navigate).
 
