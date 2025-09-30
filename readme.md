@@ -1,5 +1,5 @@
 
-# 🤖 AI Browser Automation - Production Ready
+# 🤖 AI Browser Automation 
 
 A powerful Chrome extension powered by LLaMA3 AI for intelligent browser automation. Extract data, fill forms, click buttons, and automate web tasks using natural language.
 
