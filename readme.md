@@ -1,339 +1,270 @@
-# 🤖 AI Browser Automation - Production Ready
+# AI Browser Automation Extension v3.0
 
-A powerful Chrome extension powered by LLaMA3 AI for intelligent browser automation. Extract data, fill forms, click buttons, and automate web tasks using natural language.
+## 🎯 What's New in v3.0
 
-## ✨ Features
+### Multi-Step Instruction Support
+The extension now intelligently handles multiple sequential instructions! You can chain actions together using natural language.
 
-### 🔍 Data Extraction
-- **Extract all links** - Get every hyperlink with text and URL
-- **Find images** - Retrieve all images with src and alt text
-- **Get headings** - Extract all H1-H6 tags
-- **CSS Selectors** - Query any element using CSS selectors
-- **Forms analysis** - Identify all form fields
-- **Metadata extraction** - Get page meta information
+## 🚀 Features
 
-### 📝 Form Automation
-- **Smart field matching** - Automatically matches fields by name, ID, or placeholder
-- **Multiple input types** - Supports text, email, password, textarea, select, checkbox, radio
-- **Event triggering** - Properly triggers input, change, and blur events
+### Single Instructions
+Execute one action at a time:
+- ✅ Extract data from pages
+- ✅ Fill form with dummy data
+- ✅ Click elements
+- ✅ Navigate to URLs
 
-### 🖱️ Element Interaction
-- **Click buttons** - Find and click by text, ID, class, or selector
-- **Smart element finding** - Uses multiple strategies to locate elements
-- **Visual feedback** - Highlights elements before clicking
+### Multi-Step Sequences (NEW!)
+Chain multiple actions together:
+- ✅ Navigate → Fill Form → Click Submit
+- ✅ Go to page → Extract data → Click next
+- ✅ Fill multiple forms → Click buttons
+- ✅ Automatic page loading between steps
+- ✅ Sequential execution with error handling
 
-### 🧭 Navigation
-- **URL navigation** - Go to any website
-- **Intelligent URL handling** - Automatically adds https:// if needed
+## 📝 Usage Examples
 
-## 📦 Installation
+### Single Instructions
+```
+Get all links from this page
+Fill email with test@example.com
+Click the submit button
+Go to https://google.com
+Extract all headings
+```
 
-### 1. Backend Setup
+### Multi-Step Instructions
+```
+Go to contact page and then fill name with John Doe and then click submit
 
-#### Prerequisites
-- Python 3.8+
-- Ollama installed with LLaMA3 model
+Navigate to google.com, then search for AI automation, then click the first result
 
-#### Install Ollama and LLaMA3
+Click login button; Fill email with user@example.com; Fill password with pass123; Click submit
+
+Step 1: Go to the about page
+Step 2: Extract all team member names
+Step 3: Click the contact button
+```
+
+### Supported Separators
+The AI understands multiple ways to chain commands:
+- ✅ `and then` - "Go to page and then fill form"
+- ✅ `then` - "Fill form then click submit"
+- ✅ `after that` - "Navigate to page, after that click login"
+- ✅ `next` - "Click menu, next click settings"
+- ✅ `;` - "Fill email; Fill password; Click submit"
+- ✅ Line breaks - Use each line as a separate step
+- ✅ Numbered steps - "1. Go to page 2. Fill form 3. Submit"
+
+## 🔧 How It Works
+
+### Backend (main.py)
+1. **Instruction Detection**: Identifies if prompt contains multiple instructions
+2. **Instruction Splitting**: Intelligently splits the prompt into individual steps
+3. **Sequential Processing**: Each step is processed separately by the AI
+4. **Returns Sequence**: Sends back all steps as a sequence action
+
+### Frontend (popup.js)
+1. **Receives Sequence**: Gets all steps from the backend
+2. **Sequential Execution**: Executes each step one by one
+3. **Page Loading Wait**: Waits for page to load after navigation/clicks
+4. **Content Refresh**: Updates page content between steps for accuracy
+5. **Error Handling**: Continues to next step even if one fails
+6. **Progress Tracking**: Shows which step is currently executing
+
+## 📊 Sequence Response Format
+
+When multiple instructions are detected, the API returns:
+
+```json
+{
+  "action": "sequence",
+  "data": {
+    "steps": [
+      {
+        "step": 1,
+        "instruction": "Go to contact page",
+        "action": "click",
+        "data": "a[href*='contact']"
+      },
+      {
+        "step": 2,
+        "instruction": "Fill name with John Doe",
+        "action": "fill_form",
+        "data": {"name": "John Doe"}
+      },
+      {
+        "step": 3,
+        "instruction": "Click submit",
+        "action": "click",
+        "data": "Submit"
+      }
+    ],
+    "total": 3
+  }
+}
+```
+
+## ⚙️ Installation
+
+### 1. Install Dependencies
 ```bash
-# Install Ollama (macOS/Linux)
-curl -fsSL https://ollama.com/install.sh | sh
-
-# Pull LLaMA3 model
-ollama pull llama3
+pip install fastapi uvicorn ollama beautifulsoup4 pydantic
 ```
 
-#### Install Python Dependencies
-```bash
-# Create virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+### 2. Update System Instruction
+Replace the content of `prompts/systemInstruction.txt` with the new multi-step aware version.
 
-# Install dependencies
-pip install -r requirements.txt
-```
-
-#### Project Structure
-```
-project/
-├── main.py
-├── requirements.txt
-├── prompts/
-│   └── systemInstruction.txt
-└── extension/
-    ├── manifest.json
-    ├── popup.html
-    ├── popup.js
-    ├── background.js
-    └── icons/ (create these)
-```
-
-Create the prompts directory:
-```bash
-mkdir -p prompts
-# Copy systemInstruction.txt to prompts/systemInstruction.txt
-```
-
-#### Run the Backend
+### 3. Start the Backend
 ```bash
 python main.py
 ```
+Server runs on `http://127.0.0.1:8000`
 
-Server will start at `http://127.0.0.1:8000`
-
-### 2. Chrome Extension Setup
-
-#### Create Icons
-Create three icon files (or use placeholders):
-- `icon16.png` (16x16 pixels)
-- `icon48.png` (48x48 pixels)
-- `icon128.png` (128x128 pixels)
-
-#### Load Extension in Chrome
-1. Open Chrome and go to `chrome://extensions/`
-2. Enable "Developer mode" (top right toggle)
+### 4. Load Extension in Chrome
+1. Open `chrome://extensions/`
+2. Enable "Developer mode"
 3. Click "Load unpacked"
 4. Select your extension folder
-5. The extension icon should appear in your toolbar
 
-## 🚀 Usage
+## 🎮 Advanced Usage
 
-### Basic Examples
-
-#### Data Extraction
+### Complex Workflows
 ```
-Get all links from this page
-Show me all images
-Extract all headings
-Find all buttons
-Get text from .main-content selector
+Navigate to https://example.com/products
+Extract all product names and prices
+Click on the first product
+Fill quantity with 2
+Click add to cart
+Go to checkout page
 ```
 
-#### Form Filling
+### Conditional Flows
 ```
-Fill email with test@example.com and password with secret123
-Login as john@example.com
-Enter username: testuser
-```
-
-#### Element Clicking
-```
-Click the submit button
-Press the login button
-Click on "Sign Up"
-Click the first button
+Go to login page
+Fill email with user@test.com
+Fill password with secret123
+Click login button
+Wait for dashboard to load
+Extract user profile information
 ```
 
-#### Navigation
+### Data Collection
 ```
-Go to google.com
-Open amazon.com
-Navigate to https://example.com
+Get all article titles
+Extract publish dates
+Find all author names
+Click next page
+Repeat for page 2
 ```
-
-### Advanced Examples
-
-#### Complex Queries
-```
-Get all links with their text and URLs
-Find all images and their alt text
-Extract all headings with their levels
-Show me all form fields on this page
-```
-
-#### Research Tasks
-```
-Extract all email addresses from this page
-Find all phone numbers
-Get all social media links
-Extract product prices
-```
-
-#### Automation Sequences
-1. Fill form: `Fill email with test@test.com and password with pass123`
-2. Submit: `Click the login button`
-3. Extract data: `Get all product links`
 
 ## 🛠️ Configuration
 
-### Backend Configuration
-
-#### Change Port
-Edit `main.py`:
-```python
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8080)  # Change port here
-```
-
-#### Change AI Model
-Edit `main.py`:
-```python
-ai_processor = AIProcessor(model="llama3.1")  # Use different model
-```
-
-#### Adjust Content Limits
-Edit `main.py` in `build_context` method:
-```python
-text_preview = request.page_text[:5000]  # Increase character limit
-```
-
-### Frontend Configuration
-
-#### Change API Endpoint
-Edit `popup.js`:
+### Adjust Wait Times
+In `popup.js`, modify:
 ```javascript
-const response = await fetch('http://127.0.0.1:8080/ask', {  // Change URL
-```
-
-## 🔧 Troubleshooting
-
-### Backend Issues
-
-#### "Connection refused"
-- Ensure backend is running: `python main.py`
-- Check if port 8000 is available
-- Verify firewall settings
-
-#### "Model not found"
-```bash
-# Pull the model again
-ollama pull llama3
-```
-
-#### "Module not found"
-```bash
-# Reinstall dependencies
-pip install -r requirements.txt --force-reinstall
-```
-
-### Extension Issues
-
-#### Extension not loading
-- Check manifest.json for syntax errors
-- Ensure all files are in correct locations
-- Check Chrome console for errors (F12)
-
-#### No response from AI
-- Check if backend is running
-- Open browser console (F12) and check for errors
-- Verify CORS is enabled in backend
-
-#### Elements not clicking
-- Try more specific selectors
-- Check if element is visible and clickable
-- Look for iframes (elements in iframes need special handling)
-
-## 📊 API Reference
-
-### POST /ask
-
-Request body:
-```json
-{
-  "prompt": "Get all links",
-  "page_html": "<html>...</html>",
-  "page_text": "Page content...",
-  "page_url": "https://example.com",
-  "page_title": "Example Page"
+async function waitForPageLoad(tabId, maxWait = 10000) {
+  // maxWait: Maximum time to wait (milliseconds)
 }
 ```
 
-Response format:
-```json
-{
-  "action": "query|fill_form|click|navigate",
-  "data": "action-specific data"
-}
+### Change Delays Between Steps
+```javascript
+// In executeSequence function
+await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay
 ```
 
-### Action Types
-
-#### query/extract
-```json
-{
-  "action": "query",
-  "data": [{"text": "Link", "href": "/path"}]
-}
+### AI Model Selection
+In `main.py`:
+```python
+ai_processor = AIProcessor(model="llama3")  # Change model here
 ```
 
-#### fill_form
-```json
-{
-  "action": "fill_form",
-  "data": {"email": "test@test.com", "password": "pass"}
-}
+## 🐛 Troubleshooting
+
+### Steps Execute Too Fast
+- Increase delay in `executeSequence` function
+- Increase `maxWait` in `waitForPageLoad`
+
+### Form Fields Not Filled
+- Check field name matching in `fillFormInPage`
+- Use more specific field names
+- Inspect page HTML to verify field attributes
+
+### Clicks Not Working
+- Element might not be visible/clickable
+- Try using more specific selectors
+- Check if page uses shadow DOM
+
+### Navigation Fails
+- Ensure URL includes `https://`
+- Check for redirect loops
+- Verify URL is accessible
+
+## 📈 Best Practices
+
+### 1. Be Specific
+❌ Bad: "Fill the form"
+✅ Good: "Fill name with John, email with john@example.com"
+
+### 2. Use Clear Separators
+❌ Bad: "Go page fill form click button"
+✅ Good: "Go to page, then fill form, then click button"
+
+### 3. Wait for Page Loads
+❌ Bad: "Click menu settings submit"
+✅ Good: "Click menu, then click settings, then click submit"
+
+### 4. Break Complex Tasks
+❌ Bad: "Do everything on the contact page"
+✅ Good: "Go to contact, fill name John, fill email test@test.com, click send"
+
+## 🔍 Debug Mode
+
+Enable detailed logging to see what's happening:
+
+1. **Check Raw JSON Tab**: See exact AI responses
+2. **Check Debug Tab**: View step-by-step execution logs
+3. **Browser Console**: Open DevTools to see injected script logs
+
+## 🚦 Action Types Reference
+
+| Action | Use Case | Example |
+|--------|----------|---------|
+| `query` | Extract data | "Get all links" |
+| `fill_form` | Fill inputs | "Fill email with test@example.com" | "fill form with test data"
+| `click` | Click elements | "Click submit button" |
+| `navigate` | Open URLs | "Go to google.com" |
+| `sequence` | Multiple steps | Automatically detected |
+
+## 📦 File Structure
+
+```
+extension/
+├── main.py                    # Backend API (updated for multi-step)
+├── popup.html                 # UI (updated with examples)
+├── popup.js                   # Frontend logic (sequential execution)
+├── background.js              # Extension background
+├── manifest.json              # Extension config
+└── prompts/
+    └── systemInstruction.txt  # AI system prompt (multi-step aware)
 ```
 
-#### click
-```json
-{
-  "action": "click",
-  "data": "#submitBtn"
-}
-```
+## 🎯 Roadmap
 
-#### navigate
-```json
-{
-  "action": "navigate",
-  "data": {"url": "https://example.com"}
-}
-```
+- [ ] optional Screenshot capture after each step
 
-## 🔒 Security Considerations
 
-- Backend runs locally only (127.0.0.1)
-- No data is sent to external servers except Ollama locally
-- Extension requires explicit permissions
-- Always review extracted data before using
-- Be cautious with form filling on sensitive sites
+## 📄 License
 
-## 🚀 Performance Optimization
-
-### Backend
-- Uses BeautifulSoup for fast HTML parsing
-- Direct extraction for common queries (no AI needed)
-- Limits content size sent to AI
-- Proper error handling and logging
-
-### Frontend
-- Async/await for non-blocking operations
-- Efficient DOM queries
-- Minimal memory footprint
-- Visual feedback for long operations
-
-## 📈 Future Enhancements
-
-- [ ] Support for iframes
-- [ ] Screenshot capture
-- [ ] Wait for element conditions
-- [ ] Multi-step automation workflows
-- [ ] Export/import automation scripts
-- [ ] Custom AI model support
-- [ ] Proxy support
-- [ ] Headless mode
+MIT License - Feel free to modify and distribute!
 
 ## 🤝 Contributing
 
-Contributions welcome! Areas for improvement:
-- Better element selection algorithms
-- More intelligent form field matching
-- Additional data extraction patterns
-- UI/UX improvements
-- Documentation
-
-## 📝 License
-
-MIT License - feel free to use and modify
-
-## 🙏 Acknowledgments
-
-- Built with FastAPI
-- Powered by Ollama and LLaMA3
-- BeautifulSoup for HTML parsing
-- Chrome Extensions API
+Contributions welcome! Please test multi-step scenarios thoroughly.
 
 ---
 
-**Note**: This is a development tool. Always respect website terms of service and robots.txt when automating interactions.
+**Version**: 3.0  
+**Last Updated**: 2025-01-02  
+**Requires**: Python 3.8+, Chrome/Edge Browser, Ollama

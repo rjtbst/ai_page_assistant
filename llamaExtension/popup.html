@@ -20,16 +20,23 @@
         }
         
         h3 {
-            margin: 0 0 16px 0;
+            margin: 0 0 8px 0;
             font-size: 20px;
             text-align: center;
             color: #667eea;
             font-weight: 600;
         }
         
+        .subtitle {
+            text-align: center;
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 16px;
+        }
+        
         textarea {
             width: 100%;
-            height: 100px;
+            height: 120px;
             padding: 12px;
             font-size: 14px;
             border: 2px solid #e0e0e0;
@@ -43,6 +50,26 @@
         textarea:focus {
             outline: none;
             border-color: #667eea;
+        }
+        
+        .examples {
+            font-size: 11px;
+            color: #666;
+            margin-top: 8px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .examples strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .examples div {
+            margin-left: 8px;
+            line-height: 1.6;
         }
         
         button {
@@ -107,7 +134,7 @@
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             min-height: 100px;
-            max-height: 300px;
+            max-height: 350px;
             overflow-y: auto;
             font-size: 13px;
             line-height: 1.5;
@@ -150,6 +177,11 @@
             color: #721c24;
         }
         
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
         .response-item {
             margin-bottom: 8px;
             padding: 8px;
@@ -169,18 +201,53 @@
         .link-item:hover {
             text-decoration: underline;
         }
+        
+        .step-separator {
+            border-top: 2px dashed #e0e0e0;
+            margin: 12px 0;
+            padding-top: 12px;
+        }
+        
+        pre {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        .logo-title {
+    display: flex;
+    align-items: center;   /* vertically center the items */
+    justify-content: center; /* horizontally center the group */
+    gap: 8px;               /* space between logo and text */
+}
     </style>
 </head>
 <body>
     <div class="container">
-        <h3>  AI Browser Automation</h3>
-        <textarea id="prompt" placeholder="Examples:
-• Get all links from this page
-• Find all images and their alt text
-• Fill the login form with email: test@example.com
-• Click the submit button
-• Extract all headings
-• Get text from .main-content selector"></textarea>
+        <div class="logo-title">
+            <img src="icons/icon48.png" alt="Logo" width="32" height="32" />
+
+            <h3> AI Browser Automation</h3>
+        </div>
+        <div class="subtitle">v3.0 - Multi-Step Support</div>
+        <textarea id="prompt" placeholder="Enter your instructions...
+
+Single: Get all links from this page
+Multiple: Go to contact page, then fill name with John Doe, then click submit"></textarea>
+        
+        <div class="examples">
+            <strong> Multi-Step Examples:</strong>
+            <div>
+                 Go to google.com and then search for AI automation<br>
+                 Click login, then fill email with test@example.com, then click submit<br>
+                 Navigate to contact page and fill the form and click send<br>
+                 Extract all headings; Get all images
+            </div>
+        </div>
+        
         <button id="send">Execute</button>
         
         <div class="tabs">
@@ -191,7 +258,7 @@
         
         <div id="result" class="tab-content active"></div>
         <div id="debug" class="tab-content"></div>
-        <div id="raw" class="tab-content"></div>
+        <div id="raw" class="tab-content"><pre></pre></div>
     </div>
     
     <script src="popup.js"></script>
