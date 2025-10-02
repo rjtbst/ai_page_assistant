@@ -20,27 +20,28 @@ const setStatus = (type, message) => {
     debugDiv.scrollTop = debugDiv.scrollHeight;
 };
 
-const displayResult = (action) => {
+const displayResult = (action, isSequence = false, stepNumber = null) => {
     const resultDiv = document.getElementById('result');
     const rawDiv = document.getElementById('raw');
     
     // Display raw JSON
-    rawDiv.textContent = JSON.stringify(action, null, 2);
+    if (!isSequence) {
+        rawDiv.textContent = JSON.stringify(action, null, 2);
+    }
     
     // Display human-readable result
     if (action.error) {
-        resultDiv.innerHTML = `<div class="status error">Error</div><div>${action.error}</div>`;
+        resultDiv.innerHTML += `<div class="status error">Error${stepNumber ? ` (Step ${stepNumber})` : ''}</div><div>${action.error}</div>`;
         return;
     }
     
     const { action: act, data } = action;
-    let html = `<div class="status success">Action: ${act}</div>`;
+    let html = `<div class="status success">Action${stepNumber ? ` (Step ${stepNumber})` : ''}: ${act}</div>`;
     
     if (act === 'query' || act === 'extract') {
         if (Array.isArray(data)) {
-            // Handle array of items (like links, images, etc.)
             html += `<div><strong>Found ${data.length} items:</strong></div>`;
-            data.forEach((item, idx) => {
+            data.slice(0, 10).forEach((item) => {
                 if (typeof item === 'object') {
                     html += '<div class="response-item">';
                     Object.entries(item).forEach(([key, value]) => {
@@ -55,15 +56,16 @@ const displayResult = (action) => {
                     html += `<div class="response-item">${item}</div>`;
                 }
             });
+            if (data.length > 10) {
+                html += `<div class="response-item"><em>... and ${data.length - 10} more items</em></div>`;
+            }
         } else if (typeof data === 'object') {
-            // Handle object
             html += '<div class="response-item">';
             Object.entries(data).forEach(([key, value]) => {
                 html += `<div><strong>${key}:</strong> ${value}</div>`;
             });
             html += '</div>';
         } else {
-            // Handle string/primitive
             html += `<div class="response-item">${data}</div>`;
         }
     } else if (act === 'fill_form') {
@@ -79,8 +81,84 @@ const displayResult = (action) => {
         html += `<div class="response-item">${JSON.stringify(data)}</div>`;
     }
     
-    resultDiv.innerHTML = html;
+    resultDiv.innerHTML += html;
 };
+
+// Wait for page load after navigation
+async function waitForPageLoad(tabId, maxWait = 10000) {
+    return new Promise((resolve) => {
+        const startTime = Date.now();
+        const checkInterval = setInterval(async () => {
+            try {
+                const tab = await chrome.tabs.get(tabId);
+                if (tab.status === 'complete' || Date.now() - startTime > maxWait) {
+                    clearInterval(checkInterval);
+                    // Additional delay for JS to execute
+                    setTimeout(resolve, 1000);
+                }
+            } catch (e) {
+                clearInterval(checkInterval);
+                resolve();
+            }
+        }, 500);
+    });
+}
+
+// Execute a sequence of actions
+async function executeSequence(tabId, steps) {
+    const results = [];
+    
+    for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const stepNum = step.step || (i + 1);
+        
+        setStatus('info', `Executing Step ${stepNum}: ${step.instruction}`);
+        displayResult(step, true, stepNum);
+        
+        if (step.error) {
+            setStatus('error', `Step ${stepNum} failed: ${step.error}`);
+            results.push({ step: stepNum, success: false, error: step.error });
+            continue;
+        }
+        
+        try {
+            // Execute the action
+            const result = await executeAction(tabId, step);
+            results.push({ step: stepNum, success: true, result });
+            
+            // Wait for page to stabilize after navigation or click
+            if (step.action === 'navigate' || step.action === 'click') {
+                setStatus('info', `Waiting for page to load after Step ${stepNum}...`);
+                await waitForPageLoad(tabId);
+                
+                // Get updated page content for next step
+                if (i < steps.length - 1) {
+                    setStatus('info', 'Refreshing page content...');
+                    const [htmlResult] = await chrome.scripting.executeScript({
+                        target: { tabId },
+                        func: () => ({
+                            html: document.documentElement.outerHTML,
+                            text: document.body.innerText,
+                            url: window.location.href,
+                            title: document.title
+                        })
+                    });
+                    // Store updated page data for next step (if needed)
+                    window.lastPageData = htmlResult.result;
+                }
+            }
+            
+            // Small delay between steps
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+        } catch (error) {
+            setStatus('error', `Step ${stepNum} execution failed: ${error.message}`);
+            results.push({ step: stepNum, success: false, error: error.message });
+        }
+    }
+    
+    return results;
+}
 
 // Main execution
 document.getElementById('send').addEventListener('click', async () => {
@@ -145,13 +223,28 @@ document.getElementById('send').addEventListener('click', async () => {
         const action = await response.json();
         setStatus('success', 'AI response received');
         
-        // Display result
-        displayResult(action);
+        // Display raw JSON
+        document.getElementById('raw').textContent = JSON.stringify(action, null, 2);
         
-        // Execute action
+        // Handle response
         if (action.error) {
             setStatus('error', action.error);
+            displayResult({ error: action.error });
+        } else if (action.action === 'sequence') {
+            // Multiple instructions - execute sequentially
+            setStatus('info', `Executing ${action.data.total} steps sequentially...`);
+            const steps = action.data.steps;
+            
+            const results = await executeSequence(activeTab.id, steps);
+            
+            // Summary
+            const successful = results.filter(r => r.success).length;
+            const failed = results.filter(r => !r.success).length;
+            setStatus('success', `Sequence completed: ${successful} successful, ${failed} failed`);
+            
         } else {
+            // Single instruction
+            displayResult(action);
             await executeAction(activeTab.id, action);
         }
         
@@ -171,7 +264,7 @@ async function executeAction(tabId, action) {
         case 'query':
         case 'extract':
             setStatus('success', 'Data extracted successfully');
-            break;
+            return 'Data extracted';
             
         case 'fill_form':
             setStatus('info', 'Filling form...');
@@ -181,7 +274,7 @@ async function executeAction(tabId, action) {
                 args: [action.data]
             });
             setStatus('success', fillResult.result);
-            break;
+            return fillResult.result;
             
         case 'click':
             setStatus('info', `Clicking: ${action.data}`);
@@ -191,16 +284,17 @@ async function executeAction(tabId, action) {
                 args: [action.data]
             });
             setStatus('success', clickResult.result);
-            break;
+            return clickResult.result;
             
         case 'navigate':
             setStatus('info', `Navigating to: ${action.data.url}`);
             await chrome.tabs.update(tabId, { url: action.data.url });
             setStatus('success', 'Navigation initiated');
-            break;
+            return 'Navigated';
             
         default:
             setStatus('info', `Action completed: ${act}`);
+            return 'Completed';
     }
 }
 

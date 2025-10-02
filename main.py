@@ -1,7 +1,7 @@
 import json
 import re
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,7 +16,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="AI Browser Automation API", version="2.0")
+app = FastAPI(title="AI Browser Automation API", version="3.0")
 
 # CORS middleware
 app.add_middleware(
@@ -29,7 +29,7 @@ app.add_middleware(
 
 
 class Request(BaseModel):
-    prompt: str = Field(..., description="User instruction")
+    prompt: str = Field(..., description="User instruction(s)")
     page_html: Optional[str] = Field(None, description="Full page HTML")
     page_text: Optional[str] = Field(None, description="Page text content")
     page_url: Optional[str] = Field(None, description="Current page URL")
@@ -138,6 +138,46 @@ class AIProcessor:
             return instruction_file.read_text(encoding="utf-8")
         return ""
     
+    def detect_multiple_instructions(self, prompt: str) -> bool:
+        """Check if prompt contains multiple instructions"""
+        indicators = [
+            'and then', 'then ', 'after that', 'next ', 'followed by',
+            'and ', '&&', ';', '\n', 'step 1', 'step 2', 'first', 'second'
+        ]
+        return any(indicator in prompt.lower() for indicator in indicators)
+    
+    def split_instructions(self, prompt: str) -> List[str]:
+        """Split multi-step instructions into individual commands"""
+        # First try splitting by common separators
+        separators = [
+            r'\s+and\s+then\s+',
+            r'\s+then\s+',
+            r'\s+after\s+that\s+',
+            r'\s+next\s+',
+            r'\s*;\s*',
+            r'\s*\n+\s*',
+            r'\s+and\s+(?=(?:click|fill|go|navigate|extract|get|find))',
+        ]
+        
+        instructions = [prompt]
+        for separator in separators:
+            new_instructions = []
+            for inst in instructions:
+                parts = re.split(separator, inst, flags=re.IGNORECASE)
+                new_instructions.extend([p.strip() for p in parts if p.strip()])
+            instructions = new_instructions
+        
+        # Filter out very short instructions (likely false positives)
+        instructions = [inst for inst in instructions if len(inst) > 5]
+        
+        # If no split occurred, check for numbered steps
+        if len(instructions) == 1:
+            step_pattern = r'(?:step\s+\d+[:.)]?\s*|^\d+[:.)\s]+)'
+            parts = re.split(step_pattern, prompt, flags=re.IGNORECASE)
+            instructions = [p.strip() for p in parts if p.strip() and len(p.strip()) > 5]
+        
+        return instructions if len(instructions) > 1 else [prompt]
+    
     def preprocess_query(self, request: Request) -> Optional[Dict[str, Any]]:
         """
         Check if query can be answered directly without AI
@@ -175,9 +215,9 @@ class AIProcessor:
         
         return None
     
-    def build_context(self, request: Request) -> str:
+    def build_context(self, request: Request, instruction: str) -> str:
         """Build comprehensive context for AI"""
-        context_parts = [f"USER INSTRUCTION: {request.prompt}\n"]
+        context_parts = [f"USER INSTRUCTION: {instruction}\n"]
         
         if request.page_url:
             context_parts.append(f"CURRENT PAGE URL: {request.page_url}")
@@ -257,20 +297,28 @@ class AIProcessor:
             logger.error(f"Unexpected error parsing response: {e}")
             return {'error': str(e)}
     
-    def process_request(self, request: Request) -> Dict[str, Any]:
-        """Main processing logic"""
+    def process_single_instruction(self, request: Request, instruction: str) -> Dict[str, Any]:
+        """Process a single instruction"""
         try:
             # Try direct preprocessing first
-            direct_result = self.preprocess_query(request)
+            temp_request = Request(
+                prompt=instruction,
+                page_html=request.page_html,
+                page_text=request.page_text,
+                page_url=request.page_url,
+                page_title=request.page_title
+            )
+            
+            direct_result = self.preprocess_query(temp_request)
             if direct_result:
-                logger.info(f"Direct query handled: {request.prompt[:50]}")
+                logger.info(f"Direct query handled: {instruction[:50]}")
                 return direct_result
             
             # Build context for AI
-            context = self.build_context(request)
+            context = self.build_context(request, instruction)
             
             # Call AI model
-            logger.info(f"Calling AI model for: {request.prompt[:50]}")
+            logger.info(f"Calling AI model for: {instruction[:50]}")
             response = ollama.chat(
                 model=self.model,
                 messages=[
@@ -284,6 +332,42 @@ class AIProcessor:
             
             # Parse and return
             return self.parse_ai_response(raw_content)
+            
+        except Exception as e:
+            logger.error(f"Error processing instruction: {e}", exc_info=True)
+            return {'error': f'Processing error: {str(e)}'}
+    
+    def process_request(self, request: Request) -> Dict[str, Any]:
+        """Main processing logic - handles single or multiple instructions"""
+        try:
+            # Check if multiple instructions
+            if self.detect_multiple_instructions(request.prompt):
+                logger.info("Multiple instructions detected")
+                instructions = self.split_instructions(request.prompt)
+                logger.info(f"Split into {len(instructions)} instructions: {instructions}")
+                
+                # Process each instruction
+                actions = []
+                for i, instruction in enumerate(instructions):
+                    logger.info(f"Processing instruction {i+1}/{len(instructions)}: {instruction}")
+                    action = self.process_single_instruction(request, instruction)
+                    actions.append({
+                        'step': i + 1,
+                        'instruction': instruction,
+                        **action
+                    })
+                
+                # Return as sequence
+                return {
+                    'action': 'sequence',
+                    'data': {
+                        'steps': actions,
+                        'total': len(actions)
+                    }
+                }
+            else:
+                # Single instruction
+                return self.process_single_instruction(request, request.prompt)
             
         except Exception as e:
             logger.error(f"Error processing request: {e}", exc_info=True)
@@ -300,7 +384,8 @@ def root():
     return {
         "status": "running",
         "service": "AI Browser Automation API",
-        "version": "2.0"
+        "version": "3.0",
+        "features": ["single_instruction", "multi_instruction", "sequence_execution"]
     }
 
 
@@ -308,6 +393,7 @@ def root():
 def ask(request: Request) -> Dict[str, Any]:
     """
     Main endpoint for processing automation requests
+    Supports both single and multiple instructions
     """
     try:
         if not request.prompt:
