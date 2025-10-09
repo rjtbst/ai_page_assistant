@@ -9,7 +9,7 @@ The extension now intelligently handles multiple sequential instructions! You ca
 
 ### Single Instructions
 Execute one action at a time:
-- ✅ Extract data from pages
+- ✅ Extract detailed data from pages
 - ✅ Fill form with dummy data
 - ✅ Click elements
 - ✅ Navigate to URLs
@@ -231,10 +231,11 @@ Enable detailed logging to see what's happening:
 
 | Action | Use Case | Example |
 |--------|----------|---------|
-| `query` | Extract data | "Get all links" |
+| `search` | Extract data | "open amazon then search for iphone " |
+| `query` | Extract data | "Get all links" | "extract all marketing services" | "get all news on crypto"
 | `fill_form` | Fill inputs | "Fill email with test@example.com" | "fill form with test data"
 | `click` | Click elements | "Click submit button" |
-| `navigate` | Open URLs | "Go to google.com" |
+| `navigate` | Open URLs | "Go to google.com" | "open instagram"
 | `sequence` | Multiple steps | Automatically detected |
 
 ## 📦 File Structure
@@ -268,3 +269,5 @@ Contributions welcome! Please test multi-step scenarios thoroughly.
 **Version**: 3.0  
 **Last Updated**: 2025-01-02  
 **Requires**: Python 3.8+, Chrome/Edge Browser, Ollama
+
+

@@ -257,6 +257,48 @@ document.getElementById('send').addEventListener('click', async () => {
     }
 });
 
+async function executeSearch (tabId, searchInput)  {
+    if (!searchInput || searchInput.trim() === ''){
+        setStatus('error','seach query is empty');
+        return;
+    }
+  await chrome.scripting.executeScript({
+    target: { tabId: tabId},
+    func: (query) => {
+      // try to find the most common search inputs
+      const input =
+        document.querySelector("input[name*='search']") ||
+        document.querySelector("input[id*='search']") ||
+        document.querySelector("input[placeholder*='search']");
+
+      if (input) {
+        input.focus();
+        input.value = query;
+
+        // fire events so site scripts detect the change
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+
+        // simulate pressing Enter
+        const enterOpts = { key: 'Enter', keyCode: 13, which: 13, bubbles: true };
+        input.dispatchEvent(new KeyboardEvent('keydown', enterOpts));
+        input.dispatchEvent(new KeyboardEvent('keypress', enterOpts));
+        input.dispatchEvent(new KeyboardEvent('keyup', enterOpts));
+
+        // if it's inside a form, submit it as fallback
+        const form = input.closest('form');
+        if (form) form.submit();
+
+        return `Searched for "${query}"`;
+      } else {
+        return 'Search input not found';
+      }
+    },
+    args: [searchInput],
+  });
+};
+
+
 async function executeAction(tabId, action) {
     const act = action.action;
     
@@ -291,7 +333,12 @@ async function executeAction(tabId, action) {
             await chrome.tabs.update(tabId, { url: action.data.url });
             setStatus('success', 'Navigation initiated');
             return 'Navigated';
-            
+        
+        case 'search':
+            setStatus('info', `Searching for: ${action.data}`);
+            await executeSearch(tabId, action.data)
+            setStatus('success','Search executed');
+            return 'Search completed';
         default:
             setStatus('info', `Action completed: ${act}`);
             return 'Completed';

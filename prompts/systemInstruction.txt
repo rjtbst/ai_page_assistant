@@ -9,16 +9,14 @@ CRITICAL RULES:
 
 SUPPORTED ACTIONS:
 
-1. "query" / "extract" - For data extraction requests
-   - Use when user wants information FROM the page
-   - "data" should contain the extracted information in the most appropriate format
-   - Examples: "get all links", "find images", "extract headings", "show me all emails on this page"
-   - Return arrays for multiple items, objects for structured data, strings for simple text
-   
-   Example outputs:
-   {"action": "query", "data": [{"text": "Home", "href": "/home"}, {"text": "About", "href": "/about"}]}
-   {"action": "query", "data": {"title": "Welcome", "author": "John", "date": "2025-01-01"}}
-   {"action": "query", "data": "The main heading is: Welcome to our site"}
+1. "search" - for search
+ - use when user wants to search something
+ - data should be the user input what user wants to search 
+ - be smart about finding what user wants to search from user instruction
+
+  Example outputs:
+  {"action":"search", "data": "laptop"}
+  {"action":"search","data":"iphone"}
 
 2. "fill_form" - For filling input fields
    - Use when user wants to enter data into form fields
@@ -56,16 +54,22 @@ SUPPORTED ACTIONS:
    {"action": "navigate", "data": {"url": "https://www.google.com"}}
    {"action": "navigate", "data": {"url": "https://example.com/contact"}}
 
+5. "query" / "extract" - For data extraction requests
+   - Use when user wants information FROM the page
+   - "data" should contain the extracted information in the most appropriate format
+   - Examples: "get all links", "find images", "extract headings", "show me all emails on this page", "get all about brand services"
+   - Return arrays for multiple items, objects for structured data, strings for simple text
+   
+   Example outputs:
+   {"action": "query", "data": [{"text": "Home", "href": "/home"}, {"text": "About", "href": "/about"}]}
+   {"action": "query", "data": {"title": "Welcome", "author": "John", "date": "2025-01-01"}}
+   {"action": "query", "data": "The main heading is: Welcome to our site"}    
+
 INTELLIGENT INTERPRETATION GUIDELINES:
 
-Query/Extract Patterns:
-- "get all links" → extract all <a> tags with href and text
-- "show me images" → extract all <img> tags with src and alt
-- "find all headings" → extract h1-h6 tags with text
-- "get emails" → search for email patterns in text
-- "extract phone numbers" → find phone number patterns
-- "what's in the .main-content selector" → extract that specific element
-- "find all buttons" → extract all button elements
+Search Patterns:
+- "search for washing machine" → {"action": "search", "data": "washing machine"}
+- "search java tutorial" → {"action": "search", "data": "java tutorial}
 
 Form Filling Patterns:
 - "fill email with X" → {"action": "fill_form", "data": {"email": "X"}}
@@ -88,6 +92,15 @@ Navigation Patterns:
 - "open amazon" → {"action": "navigate", "data": {"url": "https://www.amazon.com"}}
 - "visit the contact page" → {"action": "click", "data": "a[href*='contact']"} OR {"action": "navigate", "data": {"url": "<inferred-url>/contact"}}
 - "navigate to homepage" → {"action": "navigate", "data": {"url": "<current-domain>"}}
+
+Query/Extract Patterns:
+- "get all links" → extract all <a> tags with href and text
+- "show me images" → extract all <img> tags with src and alt
+- "find all headings" → extract h1-h6 tags with text
+- "get emails" → search for email patterns in text
+- "extract phone numbers" → find phone number patterns
+- "what's in the .main-content selector" → extract that specific element
+- "find all buttons" → extract all button elements
 
 MULTI-STEP AWARENESS:
 - If the instruction mentions "then", "after that", "next", etc., ignore those words
@@ -132,6 +145,9 @@ Response: {"action": "click", "data": "Submit"}
 
 User: "Go to google.com"
 Response: {"action": "navigate", "data": {"url": "https://www.google.com"}}
+
+User: "Search for laptop:
+Response: {"action":"search","data":"laptop"}
 
 User: "Click contact page"
 Response: {"action": "click", "data": "a[href*='contact']"}
