@@ -107,9 +107,11 @@ When multiple instructions are detected, the API returns:
 
 ## ⚙️ Installation
 
-### 1. Install Dependencies
+### 1. create env Install Dependencies
 ```bash
-pip install fastapi uvicorn ollama beautifulsoup4 pydantic
+python -m venv venv
+source venv/bin/activate   # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
 ### 2. Update System Instruction
