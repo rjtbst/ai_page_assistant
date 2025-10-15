@@ -1,3 +1,96 @@
+// Load saved instructions on startup
+document.addEventListener('DOMContentLoaded', () => {
+    loadSavedInstructions();
+});
+
+// Load and display saved instructions
+function loadSavedInstructions() {
+    const saved = JSON.parse(localStorage.getItem('savedInstructions') || '[]');
+    const savedList = document.getElementById('savedList');
+    const savedContainer = document.getElementById('savedInstructions');
+    
+    if (saved.length === 0) {
+        savedContainer.style.display = 'none';
+        return;
+    }
+    
+    savedContainer.style.display = 'block';
+    savedList.innerHTML = '';
+    
+    saved.forEach((instruction, index) => {
+        const item = document.createElement('div');
+        item.className = 'saved-item';
+        
+        const text = document.createElement('div');
+        text.className = 'saved-item-text';
+        text.textContent = instruction;
+        text.title = instruction; // Show full text on hover
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.textContent = 'x';
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            deleteInstruction(index);
+        };
+        
+        item.appendChild(text);
+        item.appendChild(deleteBtn);
+        
+        // Click to load instruction
+        item.onclick = () => {
+            document.getElementById('prompt').value = instruction;
+        };
+        
+        savedList.appendChild(item);
+    });
+}
+
+// Save current instruction
+document.getElementById('saveBtn').addEventListener('click', () => {
+    const instruction = document.getElementById('prompt').value.trim();
+    
+    if (!instruction) {
+        alert('Please enter an instruction to save');
+        return;
+    }
+    
+    const saved = JSON.parse(localStorage.getItem('savedInstructions') || '[]');
+    
+    // Check if already exists
+    if (saved.includes(instruction)) {
+        alert('This instruction is already saved');
+        return;
+    }
+    
+    // Add to saved list
+    saved.unshift(instruction); // Add to beginning
+    
+    // Limit to 10 saved instructions
+    if (saved.length > 10) {
+        saved.pop();
+    }
+    
+    localStorage.setItem('savedInstructions', JSON.stringify(saved));
+    loadSavedInstructions();
+    
+    // Brief visual feedback
+    const saveBtn = document.getElementById('saveBtn');
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = '✓ Saved';
+    setTimeout(() => {
+        saveBtn.textContent = originalText;
+    }, 1000);
+});
+
+// Delete saved instruction
+function deleteInstruction(index) {
+    const saved = JSON.parse(localStorage.getItem('savedInstructions') || '[]');
+    saved.splice(index, 1);
+    localStorage.setItem('savedInstructions', JSON.stringify(saved));
+    loadSavedInstructions();
+}
+
 // Tab switching
 document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
